@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import r2_score
 
 # Set page configuration
@@ -17,7 +17,7 @@ st.set_page_config(
 # Title and description
 st.title("Heart Failure Prediction System")
 st.markdown("""
-This application predicts the likelihood of death based on clinical records using a **Decision Tree Regression** model.
+This application predicts the likelihood of death based on clinical records using a **Decision Tree Classifier** model.
 """)
 
 # Load the dataset (hidden from the user)
@@ -39,12 +39,8 @@ sc_X = StandardScaler()
 X_train = sc_X.fit_transform(X_train)
 X_test = sc_X.transform(X_test)
 
-regressor = DecisionTreeRegressor(random_state=0)
-regressor.fit(X_train, y_train)
-
-# Evaluate the model using R² score (hidden from the user)
-y_pred = regressor.predict(X_test)
-r2 = r2_score(y_test, y_pred)
+classifier = DecisionTreeClassifier(random_state=0)
+classifier.fit(X_train, y_train)
 
 # User input for prediction
 st.write("### Patient Outcome Prediction")
@@ -75,8 +71,12 @@ with st.form(key='prediction_form'):
         # Collect input values, including sex, diabetes, and smoking status
         input_values = np.array([[sex_value, diabetes_value, smoking_value] + list(feature_inputs.values())])
         input_values_scaled = sc_X.transform(input_values)
-        prediction = regressor.predict(input_values_scaled)
-        
+        prediction = classifier.predict(input_values_scaled)
+        prediction_proba = classifier.predict_proba(input_values_scaled)
+
         outcome = 'Death' if prediction[0] == 1 else 'Survival'
+        probability = prediction_proba[0][prediction[0]] * 100
         
-        st.success(f"The patient is likely to experience **{outcome}**.")
+        st.write(f"### Predicted Outcome: **{outcome}**")
+        st.write(f"### Probability: **{probability:.2f}%**")
+        st.success(f"The patient is likely to experience **{outcome}** with a probability of **{probability:.2f}%**.")
